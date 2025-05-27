@@ -123,13 +123,13 @@ func (b CommonTableExpressionsBuilder) Exec() (_sql.Result, error) {
 
 // Query builds and Querys the query with the Runner set by RunWith.
 func (b CommonTableExpressionsBuilder) Query() (*_sql.Rows, error) {
-	data := builder.GetStruct(b).(CommonTableExpressionsBuilder)
+	data := builder.GetStruct(b).(commonTableExpressionsData)
 	return data.Query()
 }
 
 // QueryRow builds and QueryRows the query with the Runner set by RunWith.
 func (b CommonTableExpressionsBuilder) QueryRow() RowScanner {
-	data := builder.GetStruct(b).(CommonTableExpressionsBuilder)
+	data := builder.GetStruct(b).(commonTableExpressionsData)
 	return data.QueryRow()
 }
 
