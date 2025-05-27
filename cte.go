@@ -2,6 +2,7 @@ package squirrel
 
 import (
 	"bytes"
+	_sql "database/sql"
 	"fmt"
 
 	"github.com/lann/builder"
@@ -18,10 +19,36 @@ import (
 
 type commonTableExpressionsData struct {
 	PlaceholderFormat PlaceholderFormat
+	RunWith           BaseRunner
 	Recursive         bool
 	CurrentCteName    string
 	Ctes              []Sqlizer
 	Statement         Sqlizer
+}
+
+func (d *commonTableExpressionsData) Exec() (_sql.Result, error) {
+	if d.RunWith == nil {
+		return nil, RunnerNotSet
+	}
+	return ExecWith(d.RunWith, d)
+}
+
+func (d *commonTableExpressionsData) Query() (*_sql.Rows, error) {
+	if d.RunWith == nil {
+		return nil, RunnerNotSet
+	}
+	return QueryWith(d.RunWith, d)
+}
+
+func (d *commonTableExpressionsData) QueryRow() RowScanner {
+	if d.RunWith == nil {
+		return &Row{err: RunnerNotSet}
+	}
+	queryRower, ok := d.RunWith.(QueryRower)
+	if !ok {
+		return &Row{err: RunnerNotQueryRunner}
+	}
+	return QueryRowWith(queryRower, d)
 }
 
 func (d *commonTableExpressionsData) toSql() (sqlStr string, args []any, err error) {
@@ -76,6 +103,39 @@ func init() {
 // query.
 func (b CommonTableExpressionsBuilder) PlaceholderFormat(f PlaceholderFormat) CommonTableExpressionsBuilder {
 	return builder.Set(b, "PlaceholderFormat", f).(CommonTableExpressionsBuilder)
+}
+
+// Runner methods
+
+// RunWith sets a Runner (like database/sql.DB) to be used with e.g. Exec.
+// For most cases runner will be a database connection.
+//
+// Internally we use this to mock out the database connection for testing.
+func (b CommonTableExpressionsBuilder) RunWith(runner BaseRunner) CommonTableExpressionsBuilder {
+	return setRunWith(b, runner).(CommonTableExpressionsBuilder)
+}
+
+// Exec builds and Execs the query with the Runner set by RunWith.
+func (b CommonTableExpressionsBuilder) Exec() (_sql.Result, error) {
+	data := builder.GetStruct(b).(selectData)
+	return data.Exec()
+}
+
+// Query builds and Querys the query with the Runner set by RunWith.
+func (b CommonTableExpressionsBuilder) Query() (*_sql.Rows, error) {
+	data := builder.GetStruct(b).(selectData)
+	return data.Query()
+}
+
+// QueryRow builds and QueryRows the query with the Runner set by RunWith.
+func (b CommonTableExpressionsBuilder) QueryRow() RowScanner {
+	data := builder.GetStruct(b).(selectData)
+	return data.QueryRow()
+}
+
+// Scan is a shortcut for QueryRow().Scan.
+func (b CommonTableExpressionsBuilder) Scan(dest ...interface{}) error {
+	return b.QueryRow().Scan(dest...)
 }
 
 // SQL methods
