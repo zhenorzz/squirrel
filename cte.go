@@ -117,19 +117,19 @@ func (b CommonTableExpressionsBuilder) RunWith(runner BaseRunner) CommonTableExp
 
 // Exec builds and Execs the query with the Runner set by RunWith.
 func (b CommonTableExpressionsBuilder) Exec() (_sql.Result, error) {
-	data := builder.GetStruct(b).(selectData)
+	data := builder.GetStruct(b).(CommonTableExpressionsBuilder)
 	return data.Exec()
 }
 
 // Query builds and Querys the query with the Runner set by RunWith.
 func (b CommonTableExpressionsBuilder) Query() (*_sql.Rows, error) {
-	data := builder.GetStruct(b).(selectData)
+	data := builder.GetStruct(b).(CommonTableExpressionsBuilder)
 	return data.Query()
 }
 
 // QueryRow builds and QueryRows the query with the Runner set by RunWith.
 func (b CommonTableExpressionsBuilder) QueryRow() RowScanner {
-	data := builder.GetStruct(b).(selectData)
+	data := builder.GetStruct(b).(CommonTableExpressionsBuilder)
 	return data.QueryRow()
 }
 
