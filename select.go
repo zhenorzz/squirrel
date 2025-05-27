@@ -2,6 +2,7 @@ package squirrel
 
 import (
 	"bytes"
+	_sql "database/sql"
 	"fmt"
 	"strings"
 
@@ -93,6 +94,7 @@ type OrderCond struct {
 
 type selectData struct {
 	PlaceholderFormat PlaceholderFormat
+	RunWith           BaseRunner
 	Prefixes          []Sqlizer
 	Options           []string
 	Columns           []Sqlizer
@@ -107,6 +109,31 @@ type selectData struct {
 	Suffixes          []Sqlizer
 	Paginator         Paginator
 	IDColumn          string // ID column name. Required for pagination by ID.
+}
+
+func (d *selectData) Exec() (_sql.Result, error) {
+	if d.RunWith == nil {
+		return nil, RunnerNotSet
+	}
+	return ExecWith(d.RunWith, d)
+}
+
+func (d *selectData) Query() (*_sql.Rows, error) {
+	if d.RunWith == nil {
+		return nil, RunnerNotSet
+	}
+	return QueryWith(d.RunWith, d)
+}
+
+func (d *selectData) QueryRow() RowScanner {
+	if d.RunWith == nil {
+		return &Row{err: RunnerNotSet}
+	}
+	queryRower, ok := d.RunWith.(QueryRower)
+	if !ok {
+		return &Row{err: RunnerNotQueryRunner}
+	}
+	return QueryRowWith(queryRower, d)
 }
 
 func (d *selectData) ToSql() (sqlStr string, args []any, err error) {
@@ -261,6 +288,39 @@ func init() {
 // query.
 func (b SelectBuilder) PlaceholderFormat(f PlaceholderFormat) SelectBuilder {
 	return builder.Set(b, "PlaceholderFormat", f).(SelectBuilder)
+}
+
+// Runner methods
+
+// RunWith sets a Runner (like database/sql.DB) to be used with e.g. Exec.
+// For most cases runner will be a database connection.
+//
+// Internally we use this to mock out the database connection for testing.
+func (b SelectBuilder) RunWith(runner BaseRunner) SelectBuilder {
+	return setRunWith(b, runner).(SelectBuilder)
+}
+
+// Exec builds and Execs the query with the Runner set by RunWith.
+func (b SelectBuilder) Exec() (_sql.Result, error) {
+	data := builder.GetStruct(b).(selectData)
+	return data.Exec()
+}
+
+// Query builds and Querys the query with the Runner set by RunWith.
+func (b SelectBuilder) Query() (*_sql.Rows, error) {
+	data := builder.GetStruct(b).(selectData)
+	return data.Query()
+}
+
+// QueryRow builds and QueryRows the query with the Runner set by RunWith.
+func (b SelectBuilder) QueryRow() RowScanner {
+	data := builder.GetStruct(b).(selectData)
+	return data.QueryRow()
+}
+
+// Scan is a shortcut for QueryRow().Scan.
+func (b SelectBuilder) Scan(dest ...interface{}) error {
+	return b.QueryRow().Scan(dest...)
 }
 
 // SQL methods

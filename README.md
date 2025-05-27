@@ -1,8 +1,8 @@
-[![Go Reference](https://pkg.go.dev/badge/github.com/n-r-w/squirrel.svg)](https://pkg.go.dev/github.com/n-r-w/squirrel)
-[![Go Coverage](https://github.com/n-r-w/squirrel/wiki/coverage.svg)](https://raw.githack.com/wiki/n-r-w/squirrel/coverage.html)
-![CI Status](https://github.com/n-r-w/squirrel/actions/workflows/go.yml/badge.svg)
+[![Go Reference](https://pkg.go.dev/badge/github.com/zhenorzz/squirrel.svg)](https://pkg.go.dev/github.com/zhenorzz/squirrel)
+[![Go Coverage](https://github.com/zhenorzz/squirrel/wiki/coverage.svg)](https://raw.githack.com/wiki/zhenorzz/squirrel/coverage.html)
+![CI Status](https://github.com/zhenorzz/squirrel/actions/workflows/go.yml/badge.svg)
 [![Stability](http://badges.github.io/stability-badges/dist/stable.svg)](http://github.com/badges/stability-badges)
-[![Go Report](https://goreportcard.com/badge/github.com/n-r-w/squirrel)](https://goreportcard.com/badge/github.com/n-r-w/squirrel)
+[![Go Report](https://goreportcard.com/badge/github.com/zhenorzz/squirrel)](https://goreportcard.com/badge/github.com/zhenorzz/squirrel)
 
 # Evolution of [github.com/Masterminds/squirrel](https://github.com/Masterminds/squirrel), which unfortunately has not been updated by the author for a long time
 
@@ -11,7 +11,7 @@ Contains breaking changes and new features (see below).
 # Squirrel - fluent SQL generator for Go
 
 ```go
-import "github.com/n-r-w/squirrel"
+import "github.com/zhenorzz/squirrel"
 ```
 
 **Squirrel is not an ORM.**
@@ -19,7 +19,7 @@ import "github.com/n-r-w/squirrel"
 Squirrel helps you build SQL queries from composable parts:
 
 ```go
-import sq "github.com/n-r-w/squirrel"
+import sq "github.com/zhenorzz/squirrel"
 
 users := sq.Select("*").From("users").Join("emails USING (email_id)")
 
@@ -90,14 +90,6 @@ SELECT * FROM nodes WHERE meta->'format' ?| array[$1,$2]
     (which should produce the same query plan as the tuple version)
 
 ## Breaking changes in comparison to the original [github.com/Masterminds/squirrel](https://github.com/Masterminds/squirrel)
-
-### Removed all database interaction methods. Only query building functions are left
-
-Squirrel is now a pure SQL query builder. For database interaction, use:
-
-- Sqlizer.ToSql() to get the SQL query and arguments.
-- `database/sql`, <https://github.com/jackc/pgx>, etc. for executing queries.
-- <https://github.com/georgysavva/scany> for scanning rows into structs.
 
 ### Changes in the `Case` method
 

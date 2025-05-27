@@ -2,6 +2,7 @@ package squirrel
 
 import (
 	"bytes"
+	_sql "database/sql"
 	"errors"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 
 type insertData struct {
 	PlaceholderFormat PlaceholderFormat
+	RunWith           BaseRunner
 	Prefixes          []Sqlizer
 	StatementKeyword  string
 	Options           []string
@@ -21,6 +23,13 @@ type insertData struct {
 	Values            [][]any
 	Suffixes          []Sqlizer
 	Select            *SelectBuilder
+}
+
+func (d *insertData) Exec() (_sql.Result, error) {
+	if d.RunWith == nil {
+		return nil, RunnerNotSet
+	}
+	return ExecWith(d.RunWith, d)
 }
 
 func (d *insertData) ToSql() (sqlStr string, args []any, err error) {
@@ -149,6 +158,19 @@ func init() {
 // query.
 func (b InsertBuilder) PlaceholderFormat(f PlaceholderFormat) InsertBuilder {
 	return builder.Set(b, "PlaceholderFormat", f).(InsertBuilder)
+}
+
+// Runner methods
+
+// RunWith sets a Runner (like database/sql.DB) to be used with e.g. Exec.
+func (b InsertBuilder) RunWith(runner BaseRunner) InsertBuilder {
+	return setRunWith(b, runner).(InsertBuilder)
+}
+
+// Exec builds and Execs the query with the Runner set by RunWith.
+func (b InsertBuilder) Exec() (_sql.Result, error) {
+	data := builder.GetStruct(b).(insertData)
+	return data.Exec()
 }
 
 // SQL methods

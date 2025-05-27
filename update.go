@@ -2,6 +2,7 @@ package squirrel
 
 import (
 	"bytes"
+	_sql "database/sql"
 	"fmt"
 	"sort"
 	"strings"
@@ -11,6 +12,7 @@ import (
 
 type updateData struct {
 	PlaceholderFormat PlaceholderFormat
+	RunWith           BaseRunner
 	Prefixes          []Sqlizer
 	Table             string
 	SetClauses        []setClause
@@ -25,6 +27,13 @@ type updateData struct {
 type setClause struct {
 	column string
 	value  any
+}
+
+func (d *updateData) Exec() (_sql.Result, error) {
+	if d.RunWith == nil {
+		return nil, RunnerNotSet
+	}
+	return ExecWith(d.RunWith, d)
 }
 
 func (d *updateData) ToSql() (sqlStr string, args []any, err error) {
@@ -136,6 +145,19 @@ func init() {
 // query.
 func (b UpdateBuilder) PlaceholderFormat(f PlaceholderFormat) UpdateBuilder {
 	return builder.Set(b, "PlaceholderFormat", f).(UpdateBuilder)
+}
+
+// Runner methods
+
+// RunWith sets a Runner (like database/sql.DB) to be used with e.g. Exec.
+func (b UpdateBuilder) RunWith(runner BaseRunner) UpdateBuilder {
+	return setRunWith(b, runner).(UpdateBuilder)
+}
+
+// Exec builds and Execs the query with the Runner set by RunWith.
+func (b UpdateBuilder) Exec() (_sql.Result, error) {
+	data := builder.GetStruct(b).(updateData)
+	return data.Exec()
 }
 
 // SQL methods

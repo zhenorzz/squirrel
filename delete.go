@@ -2,6 +2,7 @@ package squirrel
 
 import (
 	"bytes"
+	_sql "database/sql"
 	"fmt"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 
 type deleteData struct {
 	PlaceholderFormat PlaceholderFormat
+	RunWith           BaseRunner
 	Prefixes          []Sqlizer
 	From              string
 	WhereParts        []Sqlizer
@@ -17,6 +19,13 @@ type deleteData struct {
 	Limit             string
 	Offset            string
 	Suffixes          []Sqlizer
+}
+
+func (d *deleteData) Exec() (_sql.Result, error) {
+	if d.RunWith == nil {
+		return nil, RunnerNotSet
+	}
+	return ExecWith(d.RunWith, d)
 }
 
 func (d *deleteData) ToSql() (sqlStr string, args []any, err error) {
@@ -81,6 +90,17 @@ type DeleteBuilder builder.Builder
 
 func init() {
 	builder.Register(DeleteBuilder{}, deleteData{})
+}
+
+// RunWith sets a Runner (like database/sql.DB) to be used with e.g. Exec.
+func (b DeleteBuilder) RunWith(runner BaseRunner) DeleteBuilder {
+	return setRunWith(b, runner).(DeleteBuilder)
+}
+
+// Exec builds and Execs the query with the Runner set by RunWith.
+func (b DeleteBuilder) Exec() (_sql.Result, error) {
+	data := builder.GetStruct(b).(deleteData)
+	return data.Exec()
 }
 
 // Format methods
